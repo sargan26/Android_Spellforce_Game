@@ -5,5 +5,7 @@ import androidx.annotation.IntegerRes
 class GridCell(var row: Int,
                var col: Int,
                var terrain: TerrainType,
-               var isOccupied: Boolean) {
+               var isOccupied: Boolean,
+               var owner: OwnerTyp
+) {
 }
