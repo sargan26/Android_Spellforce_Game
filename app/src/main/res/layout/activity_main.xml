@@ -30,7 +30,7 @@
         android:layout_weight="8"
         android:layout_margin="0dp" />
 
-    <!-- Untere Leiste für Gold und Rundenanzeige -->
+    <!-- Untere Leiste -->
     <LinearLayout
         android:id="@+id/statusBar"
         android:layout_width="match_parent"
@@ -40,25 +40,53 @@
         android:orientation="horizontal"
         android:padding="8dp">
 
+        <!-- Goldanzeige -->
         <TextView
             android:id="@+id/goldAmount"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Gold: 100"
             android:textSize="16sp"
             android:textColor="#FFFFFF"
             android:layout_weight="1" />
 
+        <!-- Einkommenanzeige -->
+
+        <!-- Rundennummer -->
+        <TextView
+            android:id="@+id/incomeAmount"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Einkommen: +20"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp" />
+
         <TextView
             android:id="@+id/roundNumber"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Runde: 1"
             android:textSize="16sp"
             android:textColor="#FFFFFF"
             android:layout_weight="1"
             android:gravity="end" />
+
+        <!-- Button für Runde beenden -->
+        <Button
+            android:id="@+id/endTurnButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Runde beenden"
+            android:textSize="14sp"
+            android:backgroundTint="#555555"
+            android:textColor="#FFFFFF"
+            android:padding="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_gravity="center" />
     </LinearLayout>
+
 </LinearLayout>
 
 

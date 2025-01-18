@@ -6,6 +6,8 @@ class GridCell(var row: Int,
                var col: Int,
                var terrain: TerrainType,
                var isOccupied: Boolean,
-               var owner: OwnerTyp
+               var buildingOwner: OwnerTyp,
+               var unit: UnitType,
+               var unitOwner: OwnerTyp
 ) {
 }

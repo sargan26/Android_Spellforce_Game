@@ -14,7 +14,7 @@ class Board(val rows: Int, val cols: Int) {
         grid[0][2].terrain = TerrainType.MOUNTAIN
         grid[0][3].terrain = TerrainType.HOUSE
         grid[0][4].terrain = TerrainType.MONUMENT
-        grid[0][4].owner = OwnerTyp.RED
+        grid[0][4].buildingOwner = OwnerTyp.RED
         grid[0][5].terrain = TerrainType.FOREST
         grid[0][6].terrain = TerrainType.GRASS
         grid[0][7].terrain = TerrainType.FOREST
@@ -158,7 +158,7 @@ class Board(val rows: Int, val cols: Int) {
         grid[13][2].terrain = TerrainType.GRASS
         grid[13][3].terrain = TerrainType.FOREST
         grid[13][4].terrain = TerrainType.MONUMENT
-        grid[13][4].owner = OwnerTyp.BLUE
+        grid[13][4].buildingOwner = OwnerTyp.BLUE
         grid[13][5].terrain = TerrainType.HOUSE
         grid[13][6].terrain = TerrainType.MOUNTAIN
         grid[13][7].terrain = TerrainType.MOUNTAIN
