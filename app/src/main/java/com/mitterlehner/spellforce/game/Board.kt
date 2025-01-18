@@ -3,7 +3,7 @@ package com.mitterlehner.spellforce.game
 class Board(val rows: Int, val cols: Int) {
     val grid: Array<Array<GridCell>> = Array(rows) { row ->
         Array(cols) { col ->
-            GridCell(row, col, TerrainType.GRASS, false, OwnerTyp.NONE)
+            GridCell(row, col, TerrainType.GRASS, false, OwnerTyp.NONE, UnitType.NONE, OwnerTyp.NONE)
         }
     }
 
