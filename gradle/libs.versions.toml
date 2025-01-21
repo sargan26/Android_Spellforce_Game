@@ -1,5 +1,5 @@
 [versions]
-agp = "8.7.0"
+agp = "8.7.3"
 gdxVersion = "1.11.0"
 glide = "4.14.2"
 kotlin = "1.9.24"
