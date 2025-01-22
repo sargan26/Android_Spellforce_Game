@@ -3,6 +3,10 @@ package com.mitterlehner.spellforce.game
 class Player {
     var gold: Int = 300 // initial gold
         get() = field
+        set(value) {
+            field = value
+        }
+
     var basicIncome: Int = 150 // basic income
     var currentIncome: Int = 150
     var houseCount: Int = 0

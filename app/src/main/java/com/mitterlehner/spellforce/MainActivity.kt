@@ -1,7 +1,10 @@
 package com.mitterlehner.spellforce
 
 import android.os.Bundle
+import android.util.Log
+import android.view.ViewGroup
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -11,7 +14,7 @@ import com.mitterlehner.spellforce.game.GameState
 import com.mitterlehner.spellforce.game.Player
 import com.mitterlehner.spellforce.ui.GameView
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
     private var gameState = GameState.PLAYER_TURN
     public val player = Player()
     private var roundNumber = 1;
@@ -20,9 +23,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Verweisen Sie auf das vorhandene GameView in der XML
+        val gameView = findViewById<GameView>(R.id.gameView)
+        gameView.callback = this // Setzen Sie den Callback
+
         val endTurnButton: Button = findViewById(R.id.endTurnButton)
-
-
 
         // Spielerphase beenden, wenn Button gedrückt wird
         endTurnButton.setOnClickListener {
@@ -73,5 +78,12 @@ class MainActivity : AppCompatActivity() {
 
         gameState = GameState.ENEMY_TURN
         startGameLoop() // Gegnerphase starten
+    }
+
+    override fun updateGoldAmount(gold: Int) {
+        Log.d("GameDebug", "updateGoldAmount(${gold})")
+        findViewById<TextView>(R.id.goldAmount).apply {
+            text = "Gold: $gold"
+        }
     }
 }

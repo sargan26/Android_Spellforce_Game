@@ -7,12 +7,15 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.widget.TextView
 import com.mitterlehner.spellforce.MainActivity
 import com.mitterlehner.spellforce.R
 import com.mitterlehner.spellforce.game.Board
 import com.mitterlehner.spellforce.game.OwnerTyp
+import com.mitterlehner.spellforce.game.Swordsman
 import com.mitterlehner.spellforce.game.TerrainType
 import com.mitterlehner.spellforce.game.UnitType
 
@@ -26,7 +29,10 @@ class GameView @JvmOverloads constructor(
     private val board = Board(14,9);
     private var selectedCell: Pair<Int, Int>? = null
         get() = field
+    private var selectedUnitCell: Pair<Int, Int>? = null
+    private val highlightedCells = mutableListOf<Pair<Int, Int>>()
     val player = mainActivity.player;
+    var callback: GameViewCallback? = null
 
     // Terrain-Bilder
     private val grassBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.grass)
@@ -37,7 +43,7 @@ class GameView @JvmOverloads constructor(
     private val houseBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.house2)
     private val roadBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.road)
     private val bridgeBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.bridge)
-    private val swordsmanBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.swordman)
+    private val swordsmanBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.swordman2)
 
 
     private val paint = Paint();
@@ -79,25 +85,36 @@ class GameView @JvmOverloads constructor(
                     getCellRect(col, row), // Ziel: Rechteck des Feldes
                     null // Kein spezieller Paint benötigt
                 )
-                // Zeichnen des Schwertkämpfer-Bitmaps, wenn Einheit vorhanden
-                if (cell.unit == UnitType.SWORDSMAN) {
-                    canvas.drawBitmap(
-                        swordsmanBitmap,
-                        null, // Quelle: Das gesamte Bild
-                        getCellRect(col, row), // Ziel: Rechteck des Feldes
-                        null // Kein spezieller Paint benötigt
-                    )
+                // Zeichnen des Einheiten-Bitmaps, wenn Einheit vorhanden
+                cell.unit?.let { unit ->
+                    when (unit) {
+                        is Swordsman -> {
+                            canvas.drawBitmap(
+                                swordsmanBitmap,
+                                null, // Quelle: Das gesamte Bild
+                                getCellRect(col, row), // Ziel: Rechteck des Feldes
+                                null // Kein spezieller Paint benötigt
+                            )
+                        }
+                        else -> {
+                            // Für andere Einheiten oder keine Aktion
+                        }
+                    }
                 }
-
 
                 // Draw selection indicator for the selected cell
                 if (selectedCell == Pair(row, col)) {
                     drawCornerMarks(canvas, col, row)
                     if (board.grid[row][col].terrain == TerrainType.MONUMENT
-                        && board.grid[row][col].buildingOwner == OwnerTyp.BLUE) {
+                        && board.grid[row][col].buildingOwner == OwnerTyp.BLUE
+                        && board.grid[row][col].unit == null) {
                         if (player.gold >= 150) {
-                            board.grid[row][col].unit = UnitType.SWORDSMAN
-                            board.grid[row][col].unitOwner = OwnerTyp.BLUE
+                            val swordsman = Swordsman();
+                            swordsman.owner = OwnerTyp.BLUE
+                            board.grid[row][col].unit = swordsman;
+                            player.gold -= 150
+                            callback?.updateGoldAmount(player.gold)
+                            Log.d("GameDebug", "Player Gold: ${player.gold}")
                         }
                     }
                 }
@@ -105,6 +122,21 @@ class GameView @JvmOverloads constructor(
                 //paint.style = Paint.Style.FILL // Reset style
             }
         }
+    }
+
+    private fun highlightMovementRange(row: Int, col: Int, range: Int) {
+        highlightedCells.clear()
+        for (r in (row - range)..(row + range)) {
+            for (c in (col - range)..(col + range)) {
+                if (r in 0 until board.rows && c in 0 until board.cols) {
+                    val distance = Math.abs(row - r) + Math.abs(col - c)
+                    if (distance <= range) {
+                        highlightedCells.add(Pair(r, c))
+                    }
+                }
+            }
+        }
+        invalidate() // Redraw the view
     }
 
     private fun getCellRect(col: Int, row: Int) =
@@ -145,11 +177,45 @@ class GameView @JvmOverloads constructor(
             val row = (event.y / cellSize).toInt()
             if (row in 0 until board.rows && col in 0 until board.cols) {
                 selectedCell = Pair(row, col)
-                invalidate() // Redraw the view
+                val cell = board.grid[row][col]
+                if (selectedUnitCell == null && cell.unit != null && cell.unit!!.owner == OwnerTyp.BLUE) {
+                    // Select the unit
+                    selectedUnitCell = Pair(row, col)
+                    highlightMovementRange(row, col, cell.unit!!.movementRange)
+                } else if (selectedUnitCell != null && highlightedCells.contains(Pair(row, col))) {
+                    // Move the unit
+                    val (selectedRow, selectedCol) = selectedUnitCell!!
+                    val selectedCell = board.grid[selectedRow][selectedCol]
+                    if (selectedCell.unit != null && !selectedCell.unit!!.hasMoved) {
+                        // Move unit to the new cell
+                        cell.unit = selectedCell.unit
+                        selectedCell.unit = null
+                        // Mark unit as moved
+                        cell.unit?.hasMoved = true;
+                        // Clear selection
+                        selectedUnitCell = null
+                        highlightedCells.clear()
+                        invalidate() // Redraw the view
+                    }
+                } else {
+                    // Deselect
+                    selectedUnitCell = null
+                    highlightedCells.clear()
+                    invalidate() // Redraw the view
+                }
+
+                //invalidate() // Redraw the view
             }
         }
         return true
     }
+
+    interface GameViewCallback {
+        fun updateGoldAmount(gold: Int)
+    }
+
+
+
 
 
 
