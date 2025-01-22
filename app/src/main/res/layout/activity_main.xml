@@ -17,11 +17,51 @@
         android:padding="8dp">
 
         <TextView
-            android:id="@+id/unitStatus"
+            android:id="@+id/unitName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Einheitenstatus"
-            android:textSize="18sp"
+            android:text="Name: "
+            android:textSize="16sp"
+            android:textColor="#000000" />
+
+        <TextView
+            android:id="@+id/unitOwner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Owner: "
+            android:textSize="16sp"
+            android:textColor="#000000" />
+
+        <TextView
+            android:id="@+id/unitHealth"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Health: "
+            android:textSize="16sp"
+            android:textColor="#000000" />
+
+        <TextView
+            android:id="@+id/unitAttack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Attack: "
+            android:textSize="16sp"
+            android:textColor="#000000" />
+
+        <TextView
+            android:id="@+id/unitMovement"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Movement Range: "
+            android:textSize="16sp"
+            android:textColor="#000000" />
+
+        <TextView
+            android:id="@+id/unitHasMoved"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Has Moved: "
+            android:textSize="16sp"
             android:textColor="#000000" />
     </LinearLayout>
 
@@ -91,36 +131,3 @@
     </LinearLayout>
 
 </LinearLayout>
-
-
-
-
-
-    <!--
-    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/main"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context=".MainActivity">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hello World!"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/tvSpellforce"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Spellforce"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-    -->

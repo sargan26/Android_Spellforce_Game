@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.mitterlehner.spellforce.game.GameState
+import com.mitterlehner.spellforce.game.OwnerTyp
 import com.mitterlehner.spellforce.game.Player
 import com.mitterlehner.spellforce.ui.GameView
 
@@ -18,10 +19,13 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
     private var gameState = GameState.PLAYER_TURN
     public val player = Player()
     private var roundNumber = 1;
+    private lateinit var gameView: GameView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        gameView = findViewById(R.id.gameView)
 
         // Verweisen Sie auf das vorhandene GameView in der XML
         val gameView = findViewById<GameView>(R.id.gameView)
@@ -76,6 +80,16 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
             text = "Runde: " + roundNumber.toString()
         }
 
+        // Zugriff auf das Board und Zurücksetzen von hasMoved
+        val board = gameView.board
+        for (row in board.grid) {
+            for (cell in row) {
+                if (cell.unit != null && cell.unit!!.owner == OwnerTyp.BLUE) {
+                    cell.unit!!.hasMoved = false
+                }
+            }
+        }
+
         gameState = GameState.ENEMY_TURN
         startGameLoop() // Gegnerphase starten
     }
@@ -86,4 +100,18 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
             text = "Gold: $gold"
         }
     }
+
+    override fun onUnitSelected(unit: Unit?) {
+        updateUnitStatus(unit)
+    }
+
+    fun updateUnitStatus(unit: Unit?) {
+        findViewById<TextView>(R.id.unitName).text = "Name: ${unit?.name ?: "None"}"
+        findViewById<TextView>(R.id.unitOwner).text = "Owner: ${unit?.owner ?: "None"}"
+        findViewById<TextView>(R.id.unitHealth).text = "Health: ${unit?.currentHealth ?: 0} / ${unit?.maxHealth ?: 0}"
+        findViewById<TextView>(R.id.unitAttack).text = "Attack: ${unit?.attack ?: 0}"
+        findViewById<TextView>(R.id.unitMovement).text = "Movement Range: ${unit?.movementRange ?: 0}"
+        findViewById<TextView>(R.id.unitHasMoved).text = "Has Moved: ${unit?.hasMoved ?: false}"
+    }
+
 }
