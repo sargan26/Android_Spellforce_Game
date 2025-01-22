@@ -13,7 +13,7 @@ import com.mitterlehner.spellforce.ui.GameView
 
 class MainActivity : AppCompatActivity() {
     private var gameState = GameState.PLAYER_TURN
-    private val player = Player()
+    public val player = Player()
     private var roundNumber = 1;
 
     override fun onCreate(savedInstanceState: Bundle?) {

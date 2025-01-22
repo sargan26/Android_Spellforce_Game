@@ -9,16 +9,24 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import com.mitterlehner.spellforce.MainActivity
 import com.mitterlehner.spellforce.R
 import com.mitterlehner.spellforce.game.Board
+import com.mitterlehner.spellforce.game.OwnerTyp
 import com.mitterlehner.spellforce.game.TerrainType
+import com.mitterlehner.spellforce.game.UnitType
 
 class GameView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
+    private val mainActivity: MainActivity
+        get() = context as MainActivity
+
     private val board = Board(14,9);
     private var selectedCell: Pair<Int, Int>? = null
+        get() = field
+    val player = mainActivity.player;
 
     // Terrain-Bilder
     private val grassBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.grass)
@@ -29,6 +37,7 @@ class GameView @JvmOverloads constructor(
     private val houseBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.house2)
     private val roadBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.road)
     private val bridgeBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.bridge)
+    private val swordsmanBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.swordman)
 
 
     private val paint = Paint();
@@ -70,11 +79,27 @@ class GameView @JvmOverloads constructor(
                     getCellRect(col, row), // Ziel: Rechteck des Feldes
                     null // Kein spezieller Paint benötigt
                 )
+                // Zeichnen des Schwertkämpfer-Bitmaps, wenn Einheit vorhanden
+                if (cell.unit == UnitType.SWORDSMAN) {
+                    canvas.drawBitmap(
+                        swordsmanBitmap,
+                        null, // Quelle: Das gesamte Bild
+                        getCellRect(col, row), // Ziel: Rechteck des Feldes
+                        null // Kein spezieller Paint benötigt
+                    )
+                }
 
 
                 // Draw selection indicator for the selected cell
                 if (selectedCell == Pair(row, col)) {
                     drawCornerMarks(canvas, col, row)
+                    if (board.grid[row][col].terrain == TerrainType.MONUMENT
+                        && board.grid[row][col].buildingOwner == OwnerTyp.BLUE) {
+                        if (player.gold >= 150) {
+                            board.grid[row][col].unit = UnitType.SWORDSMAN
+                            board.grid[row][col].unitOwner = OwnerTyp.BLUE
+                        }
+                    }
                 }
 
                 //paint.style = Paint.Style.FILL // Reset style
@@ -125,5 +150,8 @@ class GameView @JvmOverloads constructor(
         }
         return true
     }
+
+
+
 
 }
