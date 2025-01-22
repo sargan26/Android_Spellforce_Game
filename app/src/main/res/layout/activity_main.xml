@@ -13,57 +13,78 @@
         android:layout_height="0dp"
         android:layout_weight="2"
         android:background="#CCCCCC"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:padding="8dp">
 
-        <TextView
-            android:id="@+id/unitName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Name: "
-            android:textSize="16sp"
-            android:textColor="#000000" />
+        <!-- Linker Bereich -->
+        <LinearLayout
+            android:id="@+id/unitStatusLeft"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="8dp">
 
-        <TextView
-            android:id="@+id/unitOwner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Owner: "
-            android:textSize="16sp"
-            android:textColor="#000000" />
+            <TextView
+                android:id="@+id/unitName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Name: "
+                android:textSize="16sp"
+                android:textColor="#000000" />
 
-        <TextView
-            android:id="@+id/unitHealth"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Health: "
-            android:textSize="16sp"
-            android:textColor="#000000" />
+            <TextView
+                android:id="@+id/unitOwner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Owner: "
+                android:textSize="16sp"
+                android:textColor="#000000" />
 
-        <TextView
-            android:id="@+id/unitAttack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Attack: "
-            android:textSize="16sp"
-            android:textColor="#000000" />
+            <TextView
+                android:id="@+id/unitHealth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Health: "
+                android:textSize="16sp"
+                android:textColor="#000000" />
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/unitMovement"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Movement Range: "
-            android:textSize="16sp"
-            android:textColor="#000000" />
+        <!-- Rechter Bereich -->
+        <LinearLayout
+            android:id="@+id/unitStatusRight"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="8dp">
 
-        <TextView
-            android:id="@+id/unitHasMoved"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Has Moved: "
-            android:textSize="16sp"
-            android:textColor="#000000" />
+            <TextView
+                android:id="@+id/unitAttack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Attack: "
+                android:textSize="16sp"
+                android:textColor="#000000" />
+
+            <TextView
+                android:id="@+id/unitMovement"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Movement Range: "
+                android:textSize="16sp"
+                android:textColor="#000000" />
+
+            <TextView
+                android:id="@+id/unitHasMoved"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Has Moved: "
+                android:textSize="16sp"
+                android:textColor="#000000" />
+        </LinearLayout>
     </LinearLayout>
+
 
     <!-- Spielfeld (GameView) -->
     <com.mitterlehner.spellforce.ui.GameView
@@ -127,7 +148,7 @@
             android:textColor="#FFFFFF"
             android:padding="8dp"
             android:layout_marginStart="8dp"
-            android:layout_gravity="center" />
+            android:layout_gravity="top" />
     </LinearLayout>
 
 </LinearLayout>

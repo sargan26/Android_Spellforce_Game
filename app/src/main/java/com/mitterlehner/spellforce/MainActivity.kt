@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.mitterlehner.spellforce.game.GameState
 import com.mitterlehner.spellforce.game.OwnerTyp
 import com.mitterlehner.spellforce.game.Player
+import com.mitterlehner.spellforce.game.Unit
 import com.mitterlehner.spellforce.ui.GameView
 
 class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
@@ -101,11 +102,18 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
         }
     }
 
+    override fun updateIncome(income: Int) {
+        findViewById<TextView>(R.id.incomeAmount).apply {
+            text = "Einkommen: +" + player.updateIncome().toString()
+        }
+    }
+
     override fun onUnitSelected(unit: Unit?) {
         updateUnitStatus(unit)
     }
 
     fun updateUnitStatus(unit: Unit?) {
+        Log.d("GameDebug", "updateUnitStatus(${unit.toString()})")
         findViewById<TextView>(R.id.unitName).text = "Name: ${unit?.name ?: "None"}"
         findViewById<TextView>(R.id.unitOwner).text = "Owner: ${unit?.owner ?: "None"}"
         findViewById<TextView>(R.id.unitHealth).text = "Health: ${unit?.currentHealth ?: 0} / ${unit?.maxHealth ?: 0}"
