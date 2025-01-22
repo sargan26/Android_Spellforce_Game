@@ -81,15 +81,19 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
             text = "Runde: " + roundNumber.toString()
         }
 
-        // Zugriff auf das Board und Zurücksetzen von hasMoved
+        // Zugriff auf das Board und Zurücksetzen von hasMoved, has attacked
         val board = gameView.board
         for (row in board.grid) {
             for (cell in row) {
                 if (cell.unit != null && cell.unit!!.owner == OwnerTyp.BLUE) {
                     cell.unit!!.hasMoved = false
+                    cell.unit!!.hasAttacked = false
                 }
             }
         }
+        gameView.highlightedCells.clear()
+        gameView.attackRangeCells.clear()
+
 
         gameState = GameState.ENEMY_TURN
         startGameLoop() // Gegnerphase starten

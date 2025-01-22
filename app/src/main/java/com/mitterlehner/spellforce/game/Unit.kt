@@ -6,6 +6,8 @@ open class Unit(val name: String,
                 var currentHealth: Int,
                 val attack: Int,
                 val movementRange: Int,
-                var hasMoved: Boolean = false) {
+                val attackRange: Int,
+                var hasMoved: Boolean = false,
+                var hasAttacked: Boolean = false) {
 
 }

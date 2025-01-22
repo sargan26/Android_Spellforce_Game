@@ -5,6 +5,7 @@ class Swordsman : Unit(
     owner = OwnerTyp.NONE,
     maxHealth = 100,
     currentHealth = 100,
-    attack = 15,
-    movementRange = 3
+    attack = 35,
+    movementRange = 3,
+    attackRange = 1
 )

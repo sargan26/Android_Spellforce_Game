@@ -37,11 +37,17 @@ class GameView @JvmOverloads constructor(
     private var selectedCell: Pair<Int, Int>? = null
         get() = field
     private var selectedUnitCell: Pair<Int, Int>? = null
-    private val highlightedCells = mutableListOf<Pair<Int, Int>>()
+    public val highlightedCells = mutableListOf<Pair<Int, Int>>()
+    public val attackRangeCells = mutableListOf<Pair<Int, Int>>()
     val player = mainActivity.player;
     var callback: GameViewCallback? = null
     private val highlightPaint = Paint().apply {
         color = Color.YELLOW
+        alpha = 128 // Halbtransparent
+        style = Paint.Style.FILL
+    }
+    private val attackRangePaint = Paint().apply {
+        color = Color.RED
         alpha = 128 // Halbtransparent
         style = Paint.Style.FILL
     }
@@ -88,7 +94,6 @@ class GameView @JvmOverloads constructor(
                     TerrainType.WATER -> waterBitmap
                     TerrainType.MONUMENT -> monumentBitmap
                     TerrainType.FOREST -> forestBitmap
-                    //TerrainType.HOUSE -> houseBitmap
                     TerrainType.HOUSE -> if (cell.buildingOwner == OwnerTyp.BLUE) { houseBitmapBlue } else { houseBitmap }
                     TerrainType.ROAD -> roadBitmap
                     TerrainType.BRIDGE -> bridgeBitmap
@@ -123,6 +128,11 @@ class GameView @JvmOverloads constructor(
                     canvas.drawRect(getCellRect(col, row), highlightPaint)
                 }
 
+                // Zeichne hervorgehobene Attack Range Zellen
+                if (attackRangeCells.contains(Pair(row, col))) {
+                    canvas.drawRect(getCellRect(col, row), attackRangePaint)
+                }
+
                 // Draw selection indicator for the selected cell
                 if (selectedCell == Pair(row, col)) {
                     drawCornerMarks(canvas, col, row)
@@ -143,6 +153,22 @@ class GameView @JvmOverloads constructor(
                     val cell = board.grid[r][c]
                     if (distance <= range && cell.terrain != TerrainType.WATER) {
                         highlightedCells.add(Pair(r, c))
+                    }
+                }
+            }
+        }
+        invalidate() // Redraw the view
+    }
+
+    private fun highlightAttackRange(row: Int, col: Int, range: Int) {
+        attackRangeCells.clear()
+        for (r in (row - range)..(row + range)) {
+            for (c in (col - range)..(col + range)) {
+                if (r in 0 until board.rows && c in 0 until board.cols) {
+                    val distance = Math.abs(row - r) + Math.abs(col - c)
+                    val cell = board.grid[r][c]
+                    if (distance <= range && cell.terrain != TerrainType.WATER) {
+                        attackRangeCells.add(Pair(r, c))
                     }
                 }
             }
@@ -192,6 +218,7 @@ class GameView @JvmOverloads constructor(
                 val cell = board.grid[row][col]
 
                 if (tryMoveUnit(cell)) return true
+                if (tryAttackUnit(cell)) return true
                 if (trySelectUnit(cell, row, col)) return true
                 if (tryPlaceSwordsman(cell, row, col)) return true
                 updateUnitStatus(cell.unit)
@@ -202,6 +229,17 @@ class GameView @JvmOverloads constructor(
     }
 
     private fun tryMoveUnit(cell: GridCell): Boolean {
+        // Click on same unit = skip moving
+        if (selectedUnitCell != null && highlightedCells.contains(selectedCell) && cell.unit != null) {
+            cell.unit!!.hasMoved = true
+            highlightedCells.clear()
+            selectedUnitCell = null
+            updateUnitStatus(cell.unit)
+            invalidate()
+            return true
+        }
+
+        // Moving
         if (selectedUnitCell != null && highlightedCells.contains(selectedCell) && cell.unit == null) {
             val (originRow, originCol) = selectedUnitCell!!
             val originCell = board.grid[originRow][originCol]
@@ -231,13 +269,47 @@ class GameView @JvmOverloads constructor(
         return false
     }
 
+    private fun tryAttackUnit(cell: GridCell): Boolean {
+        if (selectedUnitCell != null && attackRangeCells.contains(selectedCell)
+            && cell.unit != null) {
+            val (originRow, originCol) = selectedUnitCell!!
+            val originCell = board.grid[originRow][originCol]
+
+            if (originCell.unit?.owner != cell.unit?.owner) {
+                val attackValue = originCell.unit?.attack ?: 0
+                cell.unit?.currentHealth = (cell.unit?.currentHealth ?: 0) - attackValue
+
+                val targetHealth = cell.unit?.currentHealth ?: 0
+                if (targetHealth <= 0) {
+                    cell.unit = null
+                    invalidate()
+                }
+                originCell.unit?.hasAttacked = true
+            }
+
+        }
+        return false
+    }
+
     private fun trySelectUnit(cell: GridCell, row: Int, col: Int): Boolean {
+        // Move highlighting
         if (cell.unit != null && cell.unit!!.owner == OwnerTyp.BLUE && cell.unit?.hasMoved == false) {
             highlightMovementRange(row, col, cell.unit!!.movementRange)
             selectedUnitCell = Pair(row, col)
+            updateUnitStatus(cell.unit)
             return true
         }
+        // Attack highlighting
+        if (cell.unit != null && cell.unit!!.owner == OwnerTyp.BLUE
+            && cell.unit?.hasMoved == true && cell.unit?.hasAttacked == false) {
+            highlightAttackRange(row, col, cell.unit!!.attackRange)
+            selectedUnitCell = Pair(row, col)
+            updateUnitStatus(cell.unit)
+            return true
+        }
+
         highlightedCells.clear()
+        attackRangeCells.clear()
         selectedUnitCell = null
         updateUnitStatus(cell.unit)
         invalidate()
