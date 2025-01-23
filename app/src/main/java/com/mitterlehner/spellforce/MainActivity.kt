@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
         val board = gameView.board
         for (row in board.grid) {
             for (cell in row) {
-                if (cell.unit != null && cell.unit!!.owner == OwnerTyp.BLUE) {
+                if (cell.unit != null) {
                     cell.unit!!.hasMoved = false
                     cell.unit!!.hasAttacked = false
                 }
