@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.mitterlehner.spellforce.game.GameState
 import com.mitterlehner.spellforce.game.OwnerTyp
 import com.mitterlehner.spellforce.game.Player
+import com.mitterlehner.spellforce.game.Swordsman
 import com.mitterlehner.spellforce.game.Unit
 import com.mitterlehner.spellforce.ui.GameView
 
@@ -52,9 +53,6 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
                 }
 
 
-                // Update UI mit dem Einkommen
-                println("Spieler erhält  Gold.")
-
                 // Spieleraktionen hier verwalten...
 
 
@@ -62,8 +60,10 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
             }
             GameState.ENEMY_TURN -> {
                 // Gegnerzug automatisieren...
-                println("Gegnerzug beendet.")
 
+                gameView.handleEnemyTurn()
+
+                println("Gegnerzug beendet.")
                 gameState = GameState.PLAYER_TURN
                 startGameLoop() // Nächste Spielerphase
             }
@@ -72,13 +72,16 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
     }
 
     private fun endPlayerTurn() {
-        println("Spieler beendet seine Runde.")
         findViewById<TextView>(R.id.incomeAmount).apply {
             text = "Einkommen: +" + player.updateIncome().toString()
         }
         roundNumber += 1
         findViewById<TextView>(R.id.roundNumber).apply {
             text = "Runde: " + roundNumber.toString()
+        }
+
+        if (roundNumber % 2 == 0) {
+            gameView.spawnEnemyUnit()
         }
 
         // Zugriff auf das Board und Zurücksetzen von hasMoved, has attacked
@@ -99,8 +102,9 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
         startGameLoop() // Gegnerphase starten
     }
 
+
+
     override fun updateGoldAmount(gold: Int) {
-        Log.d("GameDebug", "updateGoldAmount(${gold})")
         findViewById<TextView>(R.id.goldAmount).apply {
             text = "Gold: $gold"
         }
@@ -117,7 +121,6 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
     }
 
     fun updateUnitStatus(unit: Unit?) {
-        Log.d("GameDebug", "updateUnitStatus(${unit.toString()})")
         findViewById<TextView>(R.id.unitName).text = "Name: ${unit?.name ?: "None"}"
         findViewById<TextView>(R.id.unitOwner).text = "Owner: ${unit?.owner ?: "None"}"
         findViewById<TextView>(R.id.unitHealth).text = "Health: ${unit?.currentHealth ?: 0} / ${unit?.maxHealth ?: 0}"

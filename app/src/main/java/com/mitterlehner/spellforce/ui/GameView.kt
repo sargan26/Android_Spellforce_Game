@@ -63,7 +63,8 @@ class GameView @JvmOverloads constructor(
     private val houseBitmapBlue: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.house_blue2)
     private val roadBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.road)
     private val bridgeBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.bridge)
-    private val swordsmanBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.swordman2)
+    private val swordsmanBitmapRed: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.swordman_red)
+    private val swordsmanBitmapBlue: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.swordman_blue)
 
 
     private val paint = Paint();
@@ -108,20 +109,26 @@ class GameView @JvmOverloads constructor(
 
                 // Zeichnen des Einheiten-Bitmaps, wenn Einheit vorhanden
                 cell.unit?.let { unit ->
-                    when (unit) {
-                        is Swordsman -> {
-                            canvas.drawBitmap(
-                                swordsmanBitmap,
-                                null, // Quelle: Das gesamte Bild
-                                getCellRect(col, row), // Ziel: Rechteck des Feldes
-                                null // Kein spezieller Paint benötigt
-                            )
+                    val bitmap = when (unit) {
+                        is Swordsman -> when (unit.owner) {
+                            OwnerTyp.RED -> swordsmanBitmapRed
+                            OwnerTyp.BLUE -> swordsmanBitmapBlue
+                            else -> null // Optional: Kein Bitmap für andere Besitzer
                         }
-                        else -> {
-                            // Für andere Einheiten oder keine Aktion
-                        }
+                        else -> null // Optional: Kein Bitmap für andere Einheitstypen
+                    }
+
+                    // Zeichne die Einheit, wenn ein Bitmap ausgewählt wurde
+                    bitmap?.let {
+                        canvas.drawBitmap(
+                            it,
+                            null, // Quelle: Das gesamte Bild
+                            getCellRect(col, row), // Ziel: Rechteck des Feldes
+                            null // Kein spezieller Paint benötigt
+                        )
                     }
                 }
+
 
                 // Zeichne hervorgehobene Zellen
                 if (highlightedCells.contains(Pair(row, col))) {
@@ -324,7 +331,6 @@ class GameView @JvmOverloads constructor(
                 cell.unit = swordsman
                 player.gold -= 150
                 callback?.updateGoldAmount(player.gold)
-                Log.d("GameDebug", "Swordsman placed at ($row, $col). Gold: ${player.gold}")
                 updateUnitStatus(cell.unit)
                 invalidate()
                 return true
@@ -333,9 +339,121 @@ class GameView @JvmOverloads constructor(
         return false
     }
 
+    public fun spawnEnemyUnit() {
+        val enemyMonumentCell = board.grid[0][4]
+        if (enemyMonumentCell.unit == null) {
+            val swordsman = Swordsman().apply { owner = OwnerTyp.RED }
+            enemyMonumentCell.unit = swordsman
+            invalidate()
+        }
+    }
+
+    public fun handleEnemyTurn() {
+        println("handleEnemyTurn")
+
+        for (row in board.grid) {
+            for (cell in row) {
+                val unit = cell.unit
+                if (unit != null && unit.owner == OwnerTyp.RED && !unit.hasMoved) {
+                    handleEnemyUnitAction(cell)
+                }
+            }
+        }
+    }
+
+    private fun handleEnemyUnitAction(enemyCell: GridCell) {
+        println("handleEnemyUnitAction")
+        val enemyUnit = enemyCell.unit ?: return
+        val targetCell = findNearestEnemy(enemyCell)
+
+        if (targetCell != null) {
+            moveUnit(enemyUnit, enemyCell, targetCell)
+            if (isInAttackRange(enemyCell, targetCell)) {
+                attackUnit(enemyCell, targetCell)
+            }
+        }
+    }
+
+    private fun findNearestEnemy(enemyCell: GridCell): GridCell? {
+        println("findNearestEnemy")
+        var nearestCell: GridCell? = null
+        var shortestDistance = Int.MAX_VALUE
+
+        for (row in board.grid) {
+            for (cell in row) {
+                if (cell.unit?.owner == OwnerTyp.BLUE) {
+                    val distance = manhattanDistance(enemyCell, cell)
+                    if (distance < shortestDistance) {
+                        shortestDistance = distance
+                        nearestCell = cell
+                    }
+                }
+            }
+        }
+
+        return nearestCell
+    }
+
+    private fun manhattanDistance(cell1: GridCell, cell2: GridCell): Int {
+        return Math.abs(cell1.row - cell2.row) + Math.abs(cell1.col - cell2.col)
+    }
+
+    fun moveUnit(unit: Unit, fromCell: GridCell, targetCell: GridCell) {
+        val movementRange = unit.movementRange
+
+        // Finde alle möglichen Zellen, in die sich die Einheit bewegen kann
+        val reachableCells = getReachableCells(fromCell.row, fromCell.col, movementRange)
+
+        // Wähle die Zelle aus, die dem Ziel am nächsten ist
+        val bestCell = reachableCells.minByOrNull { manhattanDistance(it, targetCell) }
+
+        if (bestCell != null && bestCell.unit == null && bestCell.terrain != TerrainType.WATER) {
+            // Bewege die Einheit in die bestmögliche Zelle
+            bestCell.unit = unit
+            fromCell.unit = null
+            unit.hasMoved = true
+            println("Gegner bewegt sich von ${fromCell.row},${fromCell.col} zu ${bestCell.row},${bestCell.col}")
+        }
+    }
+
+    // Hilfsmethode, um alle erreichbaren Zellen innerhalb der Bewegungsreichweite zu finden
+    fun getReachableCells(row: Int, col: Int, range: Int): List<GridCell> {
+        val reachableCells = mutableListOf<GridCell>()
+
+        for (r in (row - range)..(row + range)) {
+            for (c in (col - range)..(col + range)) {
+                if (r in 0 until board.rows && c in 0 until board.cols) {
+                    val cell = board.grid[r][c]
+                    val distance = Math.abs(row - r) + Math.abs(col - c)
+                    if (distance <= range) {
+                        reachableCells.add(cell)
+                    }
+                }
+            }
+        }
+
+        return reachableCells
+    }
+
+    private fun isInAttackRange(fromCell: GridCell, toCell: GridCell): Boolean {
+        return manhattanDistance(fromCell, toCell) == 1 // Angriffsreichweite 1 Feld
+    }
+
+    private fun attackUnit(attackerCell: GridCell, defenderCell: GridCell) {
+        println("attackUnit")
+        val attacker = attackerCell.unit ?: return
+        val defender = defenderCell.unit ?: return
+
+        defender.currentHealth -= attacker.attack
+        println("Gegner greift Einheit an! Schaden: ${attacker.attack}, Verbleibende Gesundheit: ${defender.currentHealth}")
+        if (defender.currentHealth <= 0) {
+            println("Einheit ${defender.name} wurde besiegt!")
+            defenderCell.unit = null
+        }
+    }
+
     private fun updateUnitStatus(unit: Unit?) {
         if (unit != null) {
-            Log.d("GameDebug", "onTouchEvent() calls callback onUnitSelected()")
             callback?.onUnitSelected(unit)
         }
     }
