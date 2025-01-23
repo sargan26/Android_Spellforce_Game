@@ -9,5 +9,4 @@ open class Unit(val name: String,
                 val attackRange: Int,
                 var hasMoved: Boolean = false,
                 var hasAttacked: Boolean = false) {
-
 }

@@ -7,19 +7,17 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.widget.TextView
 import com.mitterlehner.spellforce.MainActivity
 import com.mitterlehner.spellforce.R
 import com.mitterlehner.spellforce.game.Board
+import com.mitterlehner.spellforce.game.GameState
 import com.mitterlehner.spellforce.game.GridCell
 import com.mitterlehner.spellforce.game.OwnerTyp
 import com.mitterlehner.spellforce.game.Swordsman
 import com.mitterlehner.spellforce.game.Unit
 import com.mitterlehner.spellforce.game.TerrainType
-import com.mitterlehner.spellforce.game.UnitType
 
 class GameView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
@@ -28,7 +26,7 @@ class GameView @JvmOverloads constructor(
     private val mainActivity: MainActivity
         get() = context as MainActivity
 
-    public val board: Board by lazy {
+    val board: Board by lazy {
         Board(14, 9).apply {
             initialize()
         }
@@ -37,27 +35,27 @@ class GameView @JvmOverloads constructor(
     private var selectedCell: Pair<Int, Int>? = null
         get() = field
     private var selectedUnitCell: Pair<Int, Int>? = null
-    public val highlightedCells = mutableListOf<Pair<Int, Int>>()
-    public val attackRangeCells = mutableListOf<Pair<Int, Int>>()
+    val highlightedCells = mutableListOf<Pair<Int, Int>>()
+    val attackRangeCells = mutableListOf<Pair<Int, Int>>()
     val player = mainActivity.player;
     var callback: GameViewCallback? = null
     private val highlightPaint = Paint().apply {
         color = Color.YELLOW
-        alpha = 128 // Halbtransparent
+        alpha = 128 // Semi-transparent
         style = Paint.Style.FILL
     }
     private val attackRangePaint = Paint().apply {
         color = Color.RED
-        alpha = 128 // Halbtransparent
+        alpha = 128 // Semi-transparent
         style = Paint.Style.FILL
     }
 
     private var attackEffectCell: Pair<Int, Int>? = null
     private var attackEffectTimer: Long = 0
-    private val attackEffectDuration = 1000L // Dauer in Millisekunden (z. B. 1 Sekunde)
+    private val attackEffectDuration = 1000L // Duration in milliseconds (e.g. one second)
 
 
-    // Terrain-Bilder
+    // Terrain-Pictures
     private val grassBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.grass)
     private val mountainBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.mountain2)
     private val waterBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.water)
@@ -72,7 +70,6 @@ class GameView @JvmOverloads constructor(
     private val damageBitmap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.damage)
 
 
-    private val paint = Paint();
     private val cornerPaint = Paint().apply {
         color = Color.RED
         strokeWidth = 10f
@@ -80,17 +77,16 @@ class GameView @JvmOverloads constructor(
     }
     private val cellSize: Float
         get() = width / board.cols.toFloat() // Dynamically calculate cell size
-
     init {
         board.initialize()
     }
 
-    private val handler = android.os.Handler()
+    private val attackHandler = android.os.Handler()
     private val refreshRunnable = object : Runnable {
         override fun run() {
             if (attackEffectCell != null) {
-                invalidate() // Neu zeichnen, um Angriffseffekt zu prüfen
-                handler.postDelayed(this, 16L) // 16ms für ~60 FPS
+                invalidate()
+                attackHandler.postDelayed(this, 16L) // 16ms for ~60 FPS
             }
         }
     }
@@ -99,18 +95,17 @@ class GameView @JvmOverloads constructor(
     private var movingFrom: Pair<Int, Int>? = null
     private var movingTo: Pair<Int, Int>? = null
     private var animationProgress: Float = 0f
-    private val animationSpeed = 0.05f // Geschwindigkeit der Bewegung (0.05 = 5% pro Frame)
+    private val animationSpeed = 0.1f // Speed of the motion (0.1 = 10% per frame)
 
-    // Handler für die Animation
+    // Handler for the animation
     private val animationHandler = android.os.Handler()
     private val animationRunnable = object : Runnable {
         override fun run() {
             if (animationProgress < 1f) {
                 animationProgress += animationSpeed
-                invalidate() // Neuzeichnen
+                invalidate()
                 animationHandler.postDelayed(this, 16L) // ~60 FPS
             } else {
-                // Animation abschließen
                 completeMove()
             }
         }
@@ -135,46 +130,44 @@ class GameView @JvmOverloads constructor(
                     TerrainType.ROAD -> roadBitmap
                     TerrainType.BRIDGE -> bridgeBitmap
                 }
-                // Zeichnen des Bitmaps
+                // Draw the board
                 canvas.drawBitmap(
                     bitmap,
-                    null, // Quelle: Das gesamte Bild
-                    getCellRect(col, row), // Ziel: Rechteck des Feldes
-                    null // Kein spezieller Paint benötigt
+                    null, // Source: Whole picture
+                    getCellRect(col, row), // Des: Rectangle of field
+                    null // No special paint needed
                 )
 
-                // Zeichnen des Einheiten-Bitmaps, wenn Einheit vorhanden
+                // Draw units
                 cell.unit?.let { unit ->
                     val bitmap = when (unit) {
                         is Swordsman -> when (unit.owner) {
                             OwnerTyp.RED -> swordsmanBitmapRed
                             OwnerTyp.BLUE -> swordsmanBitmapBlue
-                            else -> null // Optional: Kein Bitmap für andere Besitzer
+                            else -> null
                         }
-                        else -> null // Optional: Kein Bitmap für andere Einheitstypen
+                        else -> null
                     }
-                    // Zeichne die Einheit, wenn ein Bitmap ausgewählt wurde
                     bitmap?.let {
                         canvas.drawBitmap(
                             it,
-                            null, // Quelle: Das gesamte Bild
-                            getCellRect(col, row), // Ziel: Rechteck des Feldes
-                            null // Kein spezieller Paint benötigt
+                            null,
+                            getCellRect(col, row),
+                            null
                         )
                     }
                 }
 
 
-                // Einheit während der Animation zeichnen
+                // Draw unit during moving animation
                 if (movingUnit != null && movingFrom != null && movingTo != null) {
                     val (fromRow, fromCol) = movingFrom!!
                     val (toRow, toCol) = movingTo!!
 
-                    // Interpolierte Position berechnen
+                    // Interpolate position
                     val interpolatedX = fromCol + (toCol - fromCol) * animationProgress
                     val interpolatedY = fromRow + (toRow - fromRow) * animationProgress
 
-                    // Rechteck der interpolierten Position berechnen
                     val interpolatedRect = android.graphics.RectF(
                         interpolatedX * cellSize,
                         interpolatedY * cellSize,
@@ -182,32 +175,31 @@ class GameView @JvmOverloads constructor(
                         (interpolatedY + 1) * cellSize
                     )
 
-                    // Einheit zeichnen
+                    // Draw unit
                     val bitmap = if (movingUnit!!.owner == OwnerTyp.BLUE) swordsmanBitmapBlue else swordsmanBitmapRed
                     canvas.drawBitmap(bitmap, null, interpolatedRect, null)
                 }
 
-                // Zeichne den Angriffseffekt, falls aktiv
+                // Draw attack effect
                 attackEffectCell?.let { (row, col) ->
                     if (System.currentTimeMillis() - attackEffectTimer < attackEffectDuration) {
                         canvas.drawBitmap(
                             damageBitmap,
-                            null, // Quelle: Das gesamte Bild
-                            getCellRect(col, row), // Ziel: Rechteck der Zelle
-                            null // Kein spezieller Paint benötigt
-                        )
+                            null,
+                            getCellRect(col, row),
+                            null)
                     } else {
-                        // Angriffseffekt entfernen, wenn die Zeit abgelaufen ist
+                        // Remove attack effect when finished
                         attackEffectCell = null
                     }
                 }
 
-                // Zeichne hervorgehobene Zellen
+                // Draw highlighted moving cells
                 if (highlightedCells.contains(Pair(row, col))) {
                     canvas.drawRect(getCellRect(col, row), highlightPaint)
                 }
 
-                // Zeichne hervorgehobene Attack Range Zellen
+                // Draw highlighted attack range cells
                 if (attackRangeCells.contains(Pair(row, col))) {
                     canvas.drawRect(getCellRect(col, row), attackRangePaint)
                 }
@@ -216,9 +208,6 @@ class GameView @JvmOverloads constructor(
                 if (selectedCell == Pair(row, col)) {
                     drawCornerMarks(canvas, col, row)
                 }
-
-
-                //paint.style = Paint.Style.FILL // Reset style
             }
         }
     }
@@ -236,7 +225,7 @@ class GameView @JvmOverloads constructor(
                 }
             }
         }
-        invalidate() // Redraw the view
+        invalidate()
     }
 
     private fun highlightAttackRange(row: Int, col: Int, range: Int) {
@@ -252,9 +241,8 @@ class GameView @JvmOverloads constructor(
                 }
             }
         }
-        invalidate() // Redraw the view
+        invalidate()
     }
-
 
     private fun getCellRect(col: Int, row: Int) =
         android.graphics.RectF(
@@ -269,21 +257,21 @@ class GameView @JvmOverloads constructor(
         val startY = row * cellSize
         val endX = (col + 1) * cellSize
         val endY = (row + 1) * cellSize
-        val cornerLength = cellSize / 5 // Länge der roten Linien
+        val cornerLength = cellSize / 5 // Length of the red lines
 
-        // Oben links
+        // Upper left
         canvas.drawLine(startX, startY, startX + cornerLength, startY, cornerPaint)
         canvas.drawLine(startX, startY, startX, startY + cornerLength, cornerPaint)
 
-        // Oben rechts
+        // Upper right
         canvas.drawLine(endX, startY, endX - cornerLength, startY, cornerPaint)
         canvas.drawLine(endX, startY, endX, startY + cornerLength, cornerPaint)
 
-        // Unten links
+        // Bottom left
         canvas.drawLine(startX, endY, startX + cornerLength, endY, cornerPaint)
         canvas.drawLine(startX, endY, startX, endY - cornerLength, cornerPaint)
 
-        // Unten rechts
+        // Bottom right
         canvas.drawLine(endX, endY, endX - cornerLength, endY, cornerPaint)
         canvas.drawLine(endX, endY, endX, endY - cornerLength, cornerPaint)
     }
@@ -303,7 +291,6 @@ class GameView @JvmOverloads constructor(
                 updateUnitStatus(cell.unit)
             }
         }
-
         return true
     }
 
@@ -324,31 +311,36 @@ class GameView @JvmOverloads constructor(
             val originCell = board.grid[originRow][originCol]
 
             if (originCell.unit?.hasMoved == false) {
-//                cell.unit = originCell.unit
-//                originCell.unit = null
                 originCell.unit?.hasMoved = true
                 startMoveAnimation(Pair(originRow, originCol), Pair(cell.row, cell.col), originCell.unit!!)
-//                cell.unit?.hasMoved = true
                 originCell.unit = null
                 callback?.onUnitSelected(cell.unit)
 
-                // Wenn die Einheit auf ein Haus zieht, ändere den Besitzer
+                // Overtake house
                 if (cell.terrain == TerrainType.HOUSE && cell.buildingOwner != OwnerTyp.BLUE) {
                     cell.buildingOwner = OwnerTyp.BLUE
                     player.houseCount++
-                    player.updateIncome() // Einkommen aktualisieren
+                    player.updateIncome()
                     callback?.updateIncome(player.currentIncome)
-                    //callback?.updateGoldAmount(player.gold)
                 }
-
                 highlightedCells.clear()
                 selectedUnitCell = null
                 updateUnitStatus(cell.unit)
+
+                // Check if game ended
+                if ()
+
                 invalidate()
                 return true
             }
         }
         return false
+    }
+
+    private fun checkGameEnded(): Boolean {
+        if (board.grid[0][4].unit.owner == OwnerTyp.BLUE) {
+            Main
+        }
     }
 
     private fun tryAttackUnit(cell: GridCell): Boolean {
@@ -367,17 +359,16 @@ class GameView @JvmOverloads constructor(
                     invalidate()
                 }
                 originCell.unit?.hasAttacked = true
+
+                // Start attack effect
+                attackEffectCell = Pair(cell.row, cell.col)
+                attackEffectTimer = System.currentTimeMillis()
+
+                // Start attack effect handler
+                attackHandler.post(refreshRunnable)
+
+                invalidate()
             }
-
-            // Aktiviere den Angriffseffekt
-            attackEffectCell = Pair(cell.row, cell.col)
-            attackEffectTimer = System.currentTimeMillis()
-
-            // Starte den Handler, um den Angriffseffekt regelmäßig zu aktualisieren
-            handler.post(refreshRunnable)
-
-            invalidate()
-
         }
         return false
     }
@@ -423,7 +414,7 @@ class GameView @JvmOverloads constructor(
         return false
     }
 
-    public fun spawnEnemyUnit() {
+    fun spawnEnemyUnit() {
         val enemyMonumentCell = board.grid[0][4]
         if (enemyMonumentCell.unit == null) {
             val swordsman = Swordsman().apply { owner = OwnerTyp.RED }
@@ -432,16 +423,10 @@ class GameView @JvmOverloads constructor(
         }
     }
 
-    public fun handleEnemyTurn() {
-        println("handleEnemyTurn")
-
+    fun handleEnemyTurn() {
         for (row in board.grid) {
             for (cell in row) {
                 val unit = cell.unit
-                if (cell.row <= 5) {
-                    println("Checking für unit at row=${cell.row} and col=${cell.col}")
-                    println("Unit = ${unit.toString()}")
-                }
 
                 if (unit != null && unit.owner == OwnerTyp.RED && !unit.hasMoved) {
                     handleEnemyUnitAction(cell)
@@ -451,7 +436,6 @@ class GameView @JvmOverloads constructor(
     }
 
     private fun handleEnemyUnitAction(enemyCell: GridCell) {
-        println("handleEnemyUnitAction")
         val enemyUnit = enemyCell.unit ?: return
         val targetCell = findNearestEnemy(enemyCell)
 
@@ -464,7 +448,6 @@ class GameView @JvmOverloads constructor(
     }
 
     private fun findNearestEnemy(enemyCell: GridCell): GridCell? {
-        println("findNearestEnemy")
         var nearestCell: GridCell? = null
         var shortestDistance = Int.MAX_VALUE
 
@@ -479,7 +462,6 @@ class GameView @JvmOverloads constructor(
                 }
             }
         }
-
         return nearestCell
     }
 
@@ -490,30 +472,25 @@ class GameView @JvmOverloads constructor(
     fun moveUnit(unit: Unit, fromCell: GridCell, targetCell: GridCell) {
         val movementRange = unit.movementRange
 
-        // Finde alle möglichen Zellen, in die sich die Einheit bewegen kann
+        // Find all reachable cells
         val reachableCells = getReachableCells(fromCell.row, fromCell.col, movementRange)
 
-        // Wähle die Zelle aus, die dem Ziel am nächsten ist
+        // Select be nearest cell to enemy
         val bestCell = reachableCells.minByOrNull { manhattanDistance(it, targetCell) }
 
+        // Moving
         if (bestCell != null && bestCell.unit == null && bestCell.terrain != TerrainType.WATER) {
-            // Starte die Animation für die Bewegung
             startMoveAnimation(
                 from = Pair(fromCell.row, fromCell.col),
                 to = Pair(bestCell.row, bestCell.col),
                 unit = unit
             )
-
-            // Einheit wird während der Animation aus der aktuellen Zelle entfernt
             fromCell.unit = null
             unit.hasMoved = true
-
-            println("Gegner bewegt sich von ${fromCell.row},${fromCell.col} zu ${bestCell.row},${bestCell.col}")
         }
     }
 
-
-    // Hilfsmethode, um alle erreichbaren Zellen innerhalb der Bewegungsreichweite zu finden
+    // Gets all reachable cells from source unit
     fun getReachableCells(row: Int, col: Int, range: Int): List<GridCell> {
         val reachableCells = mutableListOf<GridCell>()
 
@@ -533,27 +510,24 @@ class GameView @JvmOverloads constructor(
     }
 
     private fun isInAttackRange(fromCell: GridCell, toCell: GridCell): Boolean {
-        return manhattanDistance(fromCell, toCell) == 1 // Angriffsreichweite 1 Feld
+        return manhattanDistance(fromCell, toCell) == fromCell.unit?.attackRange
     }
 
     private fun attackUnit(attackerCell: GridCell, defenderCell: GridCell) {
-        println("attackUnit")
         val attacker = attackerCell.unit ?: return
         val defender = defenderCell.unit ?: return
 
         defender.currentHealth -= attacker.attack
-        println("Gegner greift Einheit an! Schaden: ${attacker.attack}, Verbleibende Gesundheit: ${defender.currentHealth}")
         if (defender.currentHealth <= 0) {
-            println("Einheit ${defender.name} wurde besiegt!")
             defenderCell.unit = null
         }
 
-        // Aktiviere den Angriffseffekt
+        // Activate attack effect
         attackEffectCell = Pair(defenderCell.row, defenderCell.col)
         attackEffectTimer = System.currentTimeMillis()
 
-        // Starte den Handler, um den Angriffseffekt regelmäßig zu aktualisieren
-        handler.post(refreshRunnable)
+        // Start attack effect handler
+        attackHandler.post(refreshRunnable)
 
         invalidate()
     }
@@ -564,18 +538,14 @@ class GameView @JvmOverloads constructor(
         }
     }
 
-    interface GameViewCallback {
-        fun updateGoldAmount(gold: Int)
-        fun updateIncome(income: Int)
-        fun onUnitSelected(unit: Unit?)
-    }
+
 
     private fun startMoveAnimation(from: Pair<Int, Int>, to: Pair<Int, Int>, unit: Unit) {
         movingUnit = unit
         movingFrom = from
         movingTo = to
         animationProgress = 0f
-        animationHandler.post(animationRunnable) // Animation starten
+        animationHandler.post(animationRunnable)
     }
 
     private fun completeMove() {
@@ -583,7 +553,7 @@ class GameView @JvmOverloads constructor(
             val (fromRow, fromCol) = movingFrom!!
             val (toRow, toCol) = movingTo!!
 
-            // Bewegung der Einheit abschließen
+            // Finish movement of unit
             board.grid[toRow][toCol].unit = movingUnit
             board.grid[fromRow][fromCol].unit = null
 
@@ -593,15 +563,14 @@ class GameView @JvmOverloads constructor(
             movingTo = null
             animationProgress = 0f
 
-            invalidate() // Letzte Aktualisierung
+            invalidate()
         }
     }
 
-
-
-
-
-
-
-
+    interface GameViewCallback {
+        fun updateGoldAmount(gold: Int)
+        fun updateIncome(income: Int)
+        fun onUnitSelected(unit: Unit?)
+        fun endGame()
+    }
 }

@@ -19,7 +19,7 @@ import com.mitterlehner.spellforce.ui.GameView
 
 class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
     private var gameState = GameState.PLAYER_TURN
-    public val player = Player()
+    val player = Player()
     private var roundNumber = 1;
     private lateinit var gameView: GameView
 
@@ -29,13 +29,12 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
 
         gameView = findViewById(R.id.gameView)
 
-        // Verweisen Sie auf das vorhandene GameView in der XML
         val gameView = findViewById<GameView>(R.id.gameView)
-        gameView.callback = this // Setzen Sie den Callback
+        gameView.callback = this
 
         val endTurnButton: Button = findViewById(R.id.endTurnButton)
 
-        // Spielerphase beenden, wenn Button gedrückt wird
+        // End player turn when button pressed
         endTurnButton.setOnClickListener {
             if (gameState == GameState.PLAYER_TURN) {
                 endPlayerTurn()
@@ -52,22 +51,17 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
                     text = "Gold: " + player.updateGold().toString()
                 }
 
-
-                // Spieleraktionen hier verwalten...
-
-
-
             }
             GameState.ENEMY_TURN -> {
-                // Gegnerzug automatisieren...
-
                 gameView.handleEnemyTurn()
 
                 println("Gegnerzug beendet.")
                 gameState = GameState.PLAYER_TURN
-                startGameLoop() // Nächste Spielerphase
+                startGameLoop() // Next player turn
             }
-            else -> println("Spiel beendet.")
+            GameState.GAME_OVER -> {
+                println("Spiel beendet.")
+            }
         }
     }
 
@@ -84,7 +78,7 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
             gameView.spawnEnemyUnit()
         }
 
-        // Zugriff auf das Board und Zurücksetzen von hasMoved, has attacked
+        // Reset hasMoved, hasAttacked at the end of the turn
         val board = gameView.board
         for (row in board.grid) {
             for (cell in row) {
@@ -97,17 +91,18 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
         gameView.highlightedCells.clear()
         gameView.attackRangeCells.clear()
 
-
         gameState = GameState.ENEMY_TURN
-        startGameLoop() // Gegnerphase starten
+        startGameLoop()
     }
-
-
 
     override fun updateGoldAmount(gold: Int) {
         findViewById<TextView>(R.id.goldAmount).apply {
             text = "Gold: $gold"
         }
+    }
+
+    override fun endGame() {
+        gameState == GameState.GAME_OVER
     }
 
     override fun updateIncome(income: Int) {
@@ -128,5 +123,4 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
         findViewById<TextView>(R.id.unitMovement).text = "Movement Range: ${unit?.movementRange ?: 0}"
         findViewById<TextView>(R.id.unitHasMoved).text = "Has Moved: ${unit?.hasMoved ?: false}"
     }
-
 }

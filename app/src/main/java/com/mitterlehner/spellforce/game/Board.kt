@@ -136,11 +136,6 @@ class Board(val rows: Int, val cols: Int) {
         grid[11][2].terrain = TerrainType.WATER
         grid[11][3].terrain = TerrainType.FOREST
         grid[11][4].terrain = TerrainType.ROAD
-
-//        var swordsman = Swordsman()
-//        swordsman.owner = OwnerTyp.RED
-//        grid[11][4].unit = swordsman
-
         grid[11][5].terrain = TerrainType.MOUNTAIN
         grid[11][6].terrain = TerrainType.WATER
         grid[11][7].terrain = TerrainType.WATER
@@ -168,8 +163,6 @@ class Board(val rows: Int, val cols: Int) {
         grid[13][6].terrain = TerrainType.MOUNTAIN
         grid[13][7].terrain = TerrainType.MOUNTAIN
         grid[13][8].terrain = TerrainType.WATER
-
-
     }
 
 }

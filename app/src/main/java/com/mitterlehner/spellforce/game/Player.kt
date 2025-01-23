@@ -7,7 +7,7 @@ class Player {
             field = value
         }
 
-    var basicIncome: Int = 150 // basic income
+    var basicIncome: Int = 150 // initial income
     var currentIncome: Int = 150
     var houseCount: Int = 0
     var houseIncome: Int = 50 // additional income per house
