@@ -1,13 +1,20 @@
 package com.mitterlehner.spellforce.game
 
 class Board(val rows: Int, val cols: Int) {
-    val grid: Array<Array<GridCell>> = Array(rows) { row ->
-        Array(cols) { col ->
-            GridCell(row, col, TerrainType.GRASS, OwnerTyp.NONE, null)
-        }
-    }
+//    val grid: Array<Array<GridCell>> = Array(rows) { row ->
+//        Array(cols) { col ->
+//            GridCell(row, col, TerrainType.GRASS, OwnerTyp.NONE, null)
+//        }
+//    }
+    lateinit var grid: Array<Array<GridCell>>
 
     fun initialize() {
+        grid = Array(rows) { row ->
+            Array(cols) { col ->
+                GridCell(row, col, TerrainType.GRASS, OwnerTyp.NONE, null)
+            }
+        }
+
         // column 1
         grid[0][0].terrain = TerrainType.WATER
         grid[0][1].terrain = TerrainType.MOUNTAIN

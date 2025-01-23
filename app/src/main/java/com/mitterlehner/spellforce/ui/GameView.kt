@@ -316,6 +316,12 @@ class GameView @JvmOverloads constructor(
                 originCell.unit = null
                 callback?.onUnitSelected(cell.unit)
 
+                // Check if player moves to the enemy monument
+                if (cell.terrain == TerrainType.MONUMENT && cell.buildingOwner == OwnerTyp.RED) {
+                    showVictoryDialog()
+                    return true
+                }
+
                 // Overtake house
                 if (cell.terrain == TerrainType.HOUSE && cell.buildingOwner != OwnerTyp.BLUE) {
                     cell.buildingOwner = OwnerTyp.BLUE
@@ -560,9 +566,38 @@ class GameView @JvmOverloads constructor(
         }
     }
 
+    private fun showVictoryDialog() {
+        val dialog = android.app.AlertDialog.Builder(context)
+            .setTitle("Victory!")
+            .setMessage("You have captured the enemy's monument!")
+            .setPositiveButton("Start New Game") { _, _ ->
+                restartGame()
+            }
+            .setCancelable(false) // Prevent closing the dialog without choosing an option
+            .create()
+
+        dialog.show()
+    }
+
+    private fun restartGame() {
+        board.initialize() // Reinitialize the board
+        player.reset() // Reset player stats (implement a reset method in your Player class)
+        callback?.updateIncome(player.currentIncome)
+        callback?.updateGoldAmount(player.gold)
+        callback?.resetRoundNumber()
+
+        highlightedCells.clear()
+        attackRangeCells.clear()
+        selectedCell = null
+        selectedUnitCell = null
+
+        invalidate() // Redraw the view
+    }
+
     interface GameViewCallback {
         fun updateGoldAmount(gold: Int)
         fun updateIncome(income: Int)
         fun onUnitSelected(unit: Unit?)
+        fun resetRoundNumber()
     }
 }

@@ -107,6 +107,13 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
         }
     }
 
+    override fun resetRoundNumber() {
+        roundNumber = 1
+        findViewById<TextView>(R.id.roundNumber).apply {
+            text = "Runde: " + roundNumber.toString()
+        }
+    }
+
     override fun onUnitSelected(unit: Unit?) {
         updateUnitStatus(unit)
     }

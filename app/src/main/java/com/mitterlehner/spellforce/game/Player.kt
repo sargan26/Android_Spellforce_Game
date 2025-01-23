@@ -21,4 +21,10 @@ class Player {
         gold += currentIncome
         return gold
     }
+
+    fun reset() {
+        gold = 300
+        houseCount = 0
+        currentIncome = 150
+    }
 }
