@@ -101,10 +101,6 @@ class MainActivity : AppCompatActivity(), GameView.GameViewCallback {
         }
     }
 
-    override fun endGame() {
-        gameState == GameState.GAME_OVER
-    }
-
     override fun updateIncome(income: Int) {
         findViewById<TextView>(R.id.incomeAmount).apply {
             text = "Einkommen: +" + player.updateIncome().toString()

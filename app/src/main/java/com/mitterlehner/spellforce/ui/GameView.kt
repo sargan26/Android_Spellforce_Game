@@ -327,8 +327,6 @@ class GameView @JvmOverloads constructor(
                 selectedUnitCell = null
                 updateUnitStatus(cell.unit)
 
-                // Check if game ended
-                if ()
 
                 invalidate()
                 return true
@@ -337,11 +335,6 @@ class GameView @JvmOverloads constructor(
         return false
     }
 
-    private fun checkGameEnded(): Boolean {
-        if (board.grid[0][4].unit.owner == OwnerTyp.BLUE) {
-            Main
-        }
-    }
 
     private fun tryAttackUnit(cell: GridCell): Boolean {
         if (selectedUnitCell != null && attackRangeCells.contains(selectedCell)
@@ -571,6 +564,5 @@ class GameView @JvmOverloads constructor(
         fun updateGoldAmount(gold: Int)
         fun updateIncome(income: Int)
         fun onUnitSelected(unit: Unit?)
-        fun endGame()
     }
 }
